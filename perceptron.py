@@ -1,6 +1,7 @@
 import numpy as np
 import random
 
+
 class neurona():
     def __init__(self, pesos_iniciales: np.array, taza_de_aprendizaje: float) -> None:
         self.pesos = pesos_iniciales
@@ -9,11 +10,14 @@ class neurona():
 
 
     def entrenar_neurona(self, entradas_de_entrenamiento: np.array, salidas_de_entrenamiento: np.array):
-        for entrada, salida in zip(entradas_de_entrenamiento, salidas_de_entrenamiento):
-            producto_punto = self.agregacion(entrada)
-            salida_obtenida = self.activacion(producto_punto)
-            self.error = salida - salida_obtenida
-            self.pesos = self.pesos + self.taza_de_aprendizaje * self.error * entrada
+        while self.error != 0:
+            for entrada, salida in zip(entradas_de_entrenamiento, salidas_de_entrenamiento):
+                if self.error == 0:
+                    continue
+                producto_punto = self.agregacion(entrada)
+                salida_obtenida = self.activacion(producto_punto)
+                self.error = salida - salida_obtenida
+                self.pesos = self.pesos + self.taza_de_aprendizaje * self.error * entrada
     
 
     def agregacion(self, entrada):
@@ -41,9 +45,8 @@ class perceptron():
 
     def entrenar(self, entradas_de_entrenamiento: np.array, salidas_de_entrenamiento: np.array) -> None:
         salidas_de_entrenamiento = salidas_de_entrenamiento.T
-        for _ in range(100):
-            for neurona, salidas in zip(self.neuronas, salidas_de_entrenamiento):
-                neurona.entrenar_neurona(entradas_de_entrenamiento, salidas)
+        for neurona, salidas in zip(self.neuronas, salidas_de_entrenamiento):
+            neurona.entrenar_neurona(entradas_de_entrenamiento, salidas)
     
 
     def entrenar_neurona(self, neurona: int, entradas_de_entrenamiento: np.array, salida_de_entrenamiento: np.array) -> None:
@@ -59,56 +62,109 @@ class perceptron():
             print(imprimir)
     
 
+    def predecir_entradas_de_testeo(self, entradas: np.array):
+        salidas_ok = np.array([[ 1, -1],
+                               [ 1, -1],
+                               [ 1,  1],
+                               [-1,  1],
+                               [ 1, -1],
+                               [-1, -1],
+                               [ 1,  1],
+                               [ 1,  1],
+                               [-1,  1]])
+        salidas = list()
+        imprimir = ""
+        for entrada in entradas:
+            imprimir += f"{entrada} - ["
+            salidas_actuales = list()
+            for neurona in self.neuronas:
+                salida = neurona.predecir(entrada)
+                salidas_actuales.append(salida)
+                imprimir += str(salida) + " "
+            imprimir += "]\n"
+            salidas.append(salidas_actuales)
+        salidas_matriz = np.vstack(salidas)
+        if np.array_equal(salidas_matriz, salidas_ok):
+            return imprimir
+        else:
+            return None
+    
+
     def __str__(self) -> str:
         imprimir = "PERCEPTRON\n"
         for neurona in self.neuronas:
             imprimir += f"{neurona}\n"
         return imprimir
     
-# python3 -i perceptron.py
 if __name__ == "__main__":
-    entradas_de_entrenamiento = np.array([[1, 1, 1, 1], [-1 , 1, 1, 1], [1, 1, -1, -1], [-1, -1, -1, -1], [1, -1, 1, 1], [1, 1, -1, 1], [1, 1, 1, -1]])
-    salidas_de_entrenamiento = np.array([[-1, -1], [-1, 1], [1, -1], [1, 1], [1, -1], [-1, 1], [1, -1]])
-    entradas_de_testeo =np.array([[1, -1, -1, -1],
-                                  [1, -1, 1, -1],
-                                  [-1, -1, 1, 1],
-                                  [-1, 1, -1, 1],
-                                  [-1, -1, 1, -1],
-                                  [-1, 1, 1, -1],
-                                  [1, -1, -1, 1],
-                                  [-1, -1, -1, 1],
-                                  [-1, 1, -1, -1]])
+    entradas_de_entrenamiento = np.array([[ 1,  1,  1,  1], 
+                                          [-1,  1,  1,  1], 
+                                          [ 1,  1, -1, -1], 
+                                          [-1, -1, -1, -1], 
+                                          [ 1, -1,  1,  1], 
+                                          [ 1,  1, -1,  1], 
+                                          [ 1,  1,  1, -1]])
+    
+    salidas_de_entrenamiento = np.array([[-1, -1], 
+                                         [-1,  1], 
+                                         [ 1, -1], 
+                                         [ 1,  1], 
+                                         [ 1, -1], 
+                                         [-1,  1], 
+                                         [ 1, -1]])
+    
+    entradas_de_testeo =np.array([[ 1, -1, -1, -1],
+                                  [ 1, -1,  1, -1],
+                                  [-1, -1,  1,  1],
+                                  [-1,  1, -1,  1],
+                                  [-1, -1,  1, -1],
+                                  [-1,  1,  1, -1],
+                                  [ 1, -1, -1,  1],
+                                  [-1, -1, -1,  1],
+                                  [-1,  1, -1, -1]])
+    
+    neurona_1 = neurona(np.array([ 0.08174903, -0.8377704, 0.33671084, 0.57375835]),  0.03673239027963381)
+    neurona_2 = neurona(np.array([-0.4094063,   0.53426245, -0.44470761,  0.98560924]), 0.05788280232040685)
+    perceptron_actual = perceptron(neurona_1, neurona_2)
+    
+    perceptron_actual.entrenar(entradas_de_entrenamiento, salidas_de_entrenamiento)
+    print(perceptron_actual)
 
-    for _ in range(1000):
-        # pesos_random_neurona_1 = random.np.array(1,4, min=-1, max=1)
-        # pesos_random_neurona_2 = random.np.array(1,4, min=-1, max=1)
-        # taza_aprendizaje_1 = random.int(min=0.1, max=0.9)
-        # taza_aprendizaje_2 = random.int(min=0.1, max=0.9)
+    perceptron_actual.predecir(entradas_de_testeo)
 
-        neurona_1 = neurona(np.array([-1.0, 0.4, 0.8, 0.9]), 0.3)
-        neurona_2 = neurona(np.array([-0.3, 0.2, 0.5, -0.4]), 0.3)
-        perceptron_actual = perceptron(neurona_1, neurona_2)
+    # for _ in range(1000):
+    #     pesos_random_neurona_1 = np.random.uniform(-1, 1, size=4)
+    #     pesos_random_neurona_2 = np.random.uniform(-1, 1, size=4)
+    #     taza_aprendizaje_1 = random.uniform(0.001, 0.1)
+    #     taza_aprendizaje_2 = random.uniform(0.001, 0.1)
 
-        perceptron_actual.entrenar(entradas_de_entrenamiento, salidas_de_entrenamiento)
-        print(perceptron_actual)
+    #     neurona_1 = neurona(pesos_random_neurona_1, taza_aprendizaje_1)
+    #     neurona_2 = neurona(pesos_random_neurona_2, taza_aprendizaje_2)
+    #     perceptron_actual = perceptron(neurona_1, neurona_2)
 
-        perceptron_actual.predecir(entradas_de_testeo)
+    #     perceptron_actual.entrenar(entradas_de_entrenamiento, salidas_de_entrenamiento)
+    #     # print(perceptron_actual)
 
-        # array_de_salida = perceptron_actual.predecir(entradas_de_testeo)
-        # comparar salidas correctas contra array_de_salida
-        # si esta ok cortas
-        # sino ok, que siga otra iteracion
+    #     sirve = perceptron_actual.predecir_entradas_de_testeo(entradas_de_testeo)
+
+    #     if sirve is not None:
+    #         print(f"Pesos iniciales neurona 1: {pesos_random_neurona_1}")
+    #         print(f"Pesos iniciales neurona 2: {pesos_random_neurona_2}")
+    #         print(perceptron_actual)
+    #         print(sirve)
+    #         break
+
 
 
 """
 SALIDAS CORRECTAS
-[ 1 -1 -1 -1] - [1 -1 ]
-[ 1 -1  1 -1] - [1 -1 ]
-[-1 -1  1  1] - [1 1 ]
-[-1  1 -1  1] - [-1 1 ]
-[-1 -1  1 -1] - [1 -1 ]
+[ 1 -1 -1 -1] - [ 1 -1 ]
+[ 1 -1  1 -1] - [ 1 -1 ]
+[-1 -1  1  1] - [ 1  1 ]
+[-1  1 -1  1] - [-1  1 ]
+[-1 -1  1 -1] - [ 1 -1 ]
 [-1  1  1 -1] - [-1 -1 ]
-[ 1 -1 -1  1] - [1 1 ]
-[-1 -1 -1  1] - [1 1 ]
-[-1  1 -1 -1] - [-1 1 ]
+[ 1 -1 -1  1] - [ 1  1 ]
+[-1 -1 -1  1] - [ 1  1 ]
+[-1  1 -1 -1] - [-1  1 ]
 """
