@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 
 class neurona():
@@ -6,6 +7,7 @@ class neurona():
         self.pesos = pesos_iniciales
         self.taza_de_aprendizaje = taza_de_aprendizaje
         self.error: float = None
+        self.errores_retropropagados = list()
     
 
     def agregacion(self, entrada):
@@ -13,7 +15,11 @@ class neurona():
     
 
     def activacion(self, resultado) -> int:
-        return 1/(1 + np.exp(-resultado))
+        try:
+            return 1/(1 + np.exp(-resultado))
+        except RuntimeWarning as e:
+            print(e)
+            return 1
     
 
     def predecir(self, entrada: np.array) -> int:
@@ -27,24 +33,30 @@ class neurona():
 
 
 class backpropagation():
-    def __init__(self, neurona_1: neurona, neurona_2: neurona, neurona_3: neurona, neurona_4: neurona) -> None:
-        self.capa_oculta = [neurona_1, neurona_2]
-        self.capa_salida = [neurona_3, neurona_4]
+    def __init__(self, neuronas_capa_oculta, neuronas_capa_salida) -> None:
+        self.capa_oculta = neuronas_capa_oculta
+        self.capa_salida = neuronas_capa_salida
 
 
     def entrenar(self, entradas_de_entrenamiento: np.array, salidas_de_entrenamiento: np.array) -> None:
         seguir = True
-        for _  in range(1,10000):
+        print(self.__str__())
+        contador = 0
+        for _  in range(1,1001):
             activaciones_capa_oculta = list()
             activaciones_capa_salida = list()
             errores_capa_salida = list()
-            errores_retropropagado = list()
+            errores_retropropagados = list()
             errores_capa_oculta = list()
             for entradas, salidas in zip(entradas_de_entrenamiento, salidas_de_entrenamiento):
+                contador += 1
+                # Paso hacia adelante capa oculta
                 for neurona_oculta in self.capa_oculta:
                     agregacion = neurona_oculta.agregacion(entradas)
                     activacion = neurona_oculta.activacion(agregacion)
                     activaciones_capa_oculta.append(activacion)
+                
+                # Paso hacia adelante capa salida
                 for neurona_salida, salida in zip(self.capa_salida, salidas):
                     agregacion = neurona_salida.agregacion(activaciones_capa_oculta)
                     activacion = neurona_salida.activacion(agregacion)
@@ -52,33 +64,52 @@ class backpropagation():
                     error_neurona_capa_salida = (1 - activacion)*(salida - activacion)
                     neurona_salida.error = error_neurona_capa_salida
                     errores_capa_salida.append(error_neurona_capa_salida)
-                    error_retropropagado = np.dot([error_neurona_capa_salida, error_neurona_capa_salida], neurona_salida.pesos)
-                    errores_retropropagado.append(error_retropropagado)
-                if self.capa_salida[0].error == 0 and self.capa_salida[1].error == 0:
+                
+                # Condicion de corte
+                if -0.1 < self.capa_salida[1].error < 0.1:
                     seguir = False
                     break
-                else: 
-                    for activacion_capa_oculta, error_retropropagado in zip(activaciones_capa_oculta, errores_retropropagado):
-                        error_neurona_capa_oculta = (1 - activacion_capa_oculta) * error_retropropagado
-                        errores_capa_oculta.append(error_neurona_capa_oculta)
-                    for neurona_oculta, error_neurona_oculta in zip(self.capa_oculta, errores_capa_oculta):
-                        neurona_oculta.error = error_neurona_oculta
+                
+                # Cálculo de los errores retropropagados
+                for neurona_salida in self.capa_salida:
+                    # error_retropropagado = np.dot(error_neurona_capa_salida, neurona_salida.pesos)
+                    for peso in neurona_salida.pesos:
+                        error_retropropagado = neurona_salida.error * peso
+                        neurona_salida.errores_retropropagados.append(error_retropropagado)
+                
+                for i in range(0, len(self.capa_oculta)):
+                    sumatoria = 0
                     for neurona_salida in self.capa_salida:
-                        nuevos_pesos = []
-                        for activacion_capa_oculta, peso_actual in zip(activaciones_capa_oculta, neurona_salida.pesos):
-                            nuevos_pesos.append(peso_actual + neurona_salida.taza_de_aprendizaje * neurona_salida.error * activacion_capa_oculta)
-                        neurona_salida.pesos = nuevos_pesos
-                    for neurona_oculta in self.capa_oculta:
-                        nuevos_pesos = []
-                        for entrada, peso_actual in zip(entradas, neurona_oculta.pesos):
-                            nuevos_pesos.append(peso_actual + neurona_oculta.taza_de_aprendizaje * neurona_oculta.error * entrada)
-                        neurona_oculta.pesos = nuevos_pesos
+                        sumatoria += neurona_salida.error * neurona_salida.errores_retropropagados[i]
+                    errores_retropropagados.append(sumatoria)
+                
+                for activacion_capa_oculta, error_retropropagado in zip(activaciones_capa_oculta, errores_retropropagados):
+                    error_neurona_capa_oculta = (1 - activacion_capa_oculta) * error_retropropagado
+                    errores_capa_oculta.append(error_neurona_capa_oculta)
+                
+                for neurona_oculta, error_neurona_oculta in zip(self.capa_oculta, errores_capa_oculta):
+                    neurona_oculta.error = error_neurona_oculta
+                
+                for neurona_salida in self.capa_salida:
+                    nuevos_pesos = []
+                    for activacion_capa_oculta, peso_actual in zip(activaciones_capa_oculta, neurona_salida.pesos):
+                        nuevos_pesos.append(peso_actual + neurona_salida.taza_de_aprendizaje * neurona_salida.error * activacion_capa_oculta)
+                    neurona_salida.pesos = nuevos_pesos
+                
+                for neurona_oculta in self.capa_oculta:
+                    nuevos_pesos = []
+                    for entrada, peso_actual in zip(entradas, neurona_oculta.pesos):
+                        nuevos_pesos.append(peso_actual + neurona_oculta.taza_de_aprendizaje * neurona_oculta.error * entrada)
+                    neurona_oculta.pesos = nuevos_pesos
+                    
                 activaciones_capa_oculta.clear()
                 activaciones_capa_salida.clear()
                 errores_capa_salida.clear()
-                errores_retropropagado.clear()
+                errores_retropropagados.clear()
                 errores_capa_oculta.clear()
-                seguir = False
+                # seguir = False
+                # print(self.__str__())
+        print("CONTADOR: ", contador)
 
 
     def predecir(self, entradas: np.array):
@@ -153,14 +184,24 @@ if __name__ == "__main__":
                                   [-1, -1, -1,  1],
                                   [-1,  1, -1, -1]])
     
-    neurona_1 = neurona([ 0.08174903, -0.8377704, 0.33671084, 0.57375835],  0.03673239027963381)
-    neurona_2 = neurona([-0.4094063,   0.53426245, -0.44470761,  0.98560924], 0.05788280232040685)
+    # neurona_1 = neurona([random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1)], 0.2)
+    neurona_1 = neurona([0.07041993544337499, -0.029085890427333824, -0.049526424118370584, -0.04468778985713509], 0.2)
+    # neurona_2 = neurona([random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1)], 0.2)
+    neurona_2 = neurona([-0.05023876351731811, -0.07020683364671161, -0.017421182495140644, -0.04219661513444326], 0.2)
 
-    neurona_3 = neurona([ 0.8174903, -0.8377704],  0.03673239027963381)
-    neurona_4 = neurona([-0.4094063,   0.53426245], 0.05788280232040685)
-    backpropagation_actual = backpropagation(neurona_1, neurona_2, neurona_3, neurona_4)
+    neurona_3 = neurona([-0.011961687573127655, -0.06454545135062761], 0.2)
+    neurona_4 = neurona([random.uniform(-0.1, 0.1),random.uniform(-0.1, 0.1)], 0.1)
+
+    capa_oculta = [neurona_1, neurona_2]
+    capa_salida = [neurona_3, neurona_4]
+
+    backpropagation_actual = backpropagation(capa_oculta, capa_salida)
+
+    original = backpropagation_actual.__str__()
     
     backpropagation_actual.entrenar(entradas_de_entrenamiento, salidas_de_entrenamiento)
+    # print("Original")
+    # print(original)
     print(backpropagation_actual)
 
     # backpropagation_actual.predecir(entradas_de_testeo)
