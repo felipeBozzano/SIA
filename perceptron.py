@@ -130,7 +130,7 @@ if __name__ == "__main__":
     perceptron_actual.entrenar(entradas_de_entrenamiento, salidas_de_entrenamiento)
     print(perceptron_actual)
 
-    perceptron_actual.predecir(entradas_de_testeo)
+    # perceptron_actual.predecir(entradas_de_testeo)
 
     # for _ in range(1000):
     #     pesos_random_neurona_1 = np.random.uniform(-1, 1, size=4)
