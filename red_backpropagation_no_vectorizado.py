@@ -130,7 +130,7 @@ class backpropagation():
             activaciones_capa_salida.clear()
     
 
-    def predecir_entradas_de_testeo(self, entradas_de_testeo: np.array):
+    def predecir_entradas_de_testeo(self, entradas_de_testeo: np.array):        
         prediccion = list()
 
         for entradas in entradas_de_testeo:
@@ -206,6 +206,7 @@ if __name__ == "__main__":
                            [ 1,  1],
                            [-1,  1]])
     
+    
     nBias      = neurona_bias()
     neurona_1  = neurona([-0.0982822300177012, -0.08862935168246806, -0.035400257820270814, 0.007275970829338951, -0.08546643472557863], 0.13100980076001534)
     neurona_2  = neurona([0.0314991704535158, 0.048634512831941784, -0.04200547736317977, -0.05341259047563005, 0.0747707434135832], 0.12131514910500175)
@@ -226,11 +227,11 @@ if __name__ == "__main__":
     backpropagation_actual.entrenar(entradas_de_entrenamiento, salidas_de_entrenamiento)
 
     # CÓDIGO PARA VERIFICAR EL FUNCIONAMIENTO DE LA RED
-    # prediccion = backpropagation_actual.predecir_entradas_de_testeo(entradas_de_testeo)
-    # if np.array_equal(prediccion, salidas_ok):
-    #     print(backpropagation_original)
-    #     print(backpropagation_actual)
-    #     print(prediccion)
+    prediccion = backpropagation_actual.predecir_entradas_de_testeo(entradas_de_testeo)
+    if np.array_equal(prediccion, salidas_ok):
+        print(backpropagation_original)
+        print(backpropagation_actual)
+        print(prediccion)
 
 
 """

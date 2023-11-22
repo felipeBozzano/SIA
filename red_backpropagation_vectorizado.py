@@ -221,8 +221,8 @@ if __name__ == "__main__":
     backpropagation_actual.entrenar(entradas_de_entrenamiento, salidas_de_entrenamiento)
 
     # CÓDIGO PARA VERIFICAR EL FUNCIONAMIENTO DE LA RED
-    # prediccion = backpropagation_actual.predecir_entradas_de_testeo(entradas_de_testeo)
-    # if np.array_equal(prediccion, salidas_ok):
-    #     print(backpropagation_original)
-    #     print(backpropagation_actual)
-    #     print(prediccion)
+    prediccion = backpropagation_actual.predecir_entradas_de_testeo(entradas_de_testeo)
+    if np.array_equal(prediccion, salidas_ok):
+        print(backpropagation_original)
+        print(backpropagation_actual)
+        print(prediccion)
